@@ -1,0 +1,1002 @@
+/* Self-hosted Latin subsets — the app makes no network requests at runtime,
+   so it works offline and inside a single-file build. */
+@import '@fontsource/jetbrains-mono/latin-400.css';
+@import '@fontsource/jetbrains-mono/latin-500.css';
+@import '@fontsource/jetbrains-mono/latin-700.css';
+@import '@fontsource/orbitron/latin-500.css';
+@import '@fontsource/orbitron/latin-700.css';
+@import '@fontsource/orbitron/latin-900.css';
+@import '@fontsource/space-grotesk/latin-400.css';
+@import '@fontsource/space-grotesk/latin-500.css';
+@import '@fontsource/space-grotesk/latin-700.css';
+
+@import 'tailwindcss';
+
+/* Tailwind infers its scan roots from the Vite root. The standalone build
+   (vite.standalone.config.js) roots at ./standalone, so without this it
+   would never scan the components and would emit almost no utilities.
+   Declaring the sources explicitly keeps both builds identical. */
+@source "./";
+@source "../standalone";
+
+/* ============================================================
+   CYBERX DESIGN SYSTEM
+   Three runtime themes driven by [data-theme] on <html>.
+   Every colour in the UI resolves through these tokens, so a
+   theme swap is a single attribute change with no reflow.
+   ============================================================ */
+
+:root {
+	--font-display: 'Orbitron', 'Space Grotesk', system-ui, sans-serif;
+	--font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+	--font-ui: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+
+	/* Pointer position (0-1), updated by the app shell for lighting effects */
+	--mx: 0.5;
+	--my: 0.5;
+
+	--speed: 1;
+}
+
+/* ---------- CYBER BLUE (default) ---------- */
+:root,
+:root[data-theme='blue'] {
+	--c-void: #04060f;
+	--c-deep: #070d1c;
+	--c-surface: #0a1226;
+	--c-panel: rgba(10, 19, 40, 0.72);
+	--c-panel-solid: #0a1328;
+	--c-line: rgba(34, 211, 238, 0.16);
+	--c-line-strong: rgba(34, 211, 238, 0.42);
+
+	--c-primary: #22d3ee;
+	--c-primary-soft: rgba(34, 211, 238, 0.14);
+	--c-accent: #3b82f6;
+	--c-secondary: #a78bfa;
+
+	--c-ok: #34d399;
+	--c-warn: #fbbf24;
+	--c-danger: #fb5779;
+	--c-info: #38bdf8;
+
+	--c-text: #d6e5f7;
+	--c-muted: #7e94b4;
+	--c-faint: #475a77;
+
+	--glow: 34, 211, 238;
+	--rain: rgba(34, 211, 238, 0.85);
+	--rain-head: #c8fbff;
+}
+
+/* ---------- MATRIX GREEN ---------- */
+:root[data-theme='green'] {
+	--c-void: #010603;
+	--c-deep: #030d07;
+	--c-surface: #04140b;
+	--c-panel: rgba(5, 22, 13, 0.74);
+	--c-panel-solid: #05170d;
+	--c-line: rgba(45, 212, 95, 0.16);
+	--c-line-strong: rgba(45, 212, 95, 0.44);
+
+	--c-primary: #2dd45f;
+	--c-primary-soft: rgba(45, 212, 95, 0.14);
+	--c-accent: #86efac;
+	--c-secondary: #14b8a6;
+
+	--c-ok: #4ade80;
+	--c-warn: #d9f99d;
+	--c-danger: #fb7185;
+	--c-info: #5eead4;
+
+	--c-text: #cdf5d9;
+	--c-muted: #6fa585;
+	--c-faint: #3c6a4e;
+
+	--glow: 45, 212, 95;
+	--rain: rgba(45, 212, 95, 0.85);
+	--rain-head: #d8ffe4;
+}
+
+/* ---------- RED ALERT ---------- */
+:root[data-theme='red'] {
+	--c-void: #0a0205;
+	--c-deep: #16060b;
+	--c-surface: #1d070e;
+	--c-panel: rgba(32, 9, 17, 0.74);
+	--c-panel-solid: #1c070d;
+	--c-line: rgba(251, 67, 101, 0.18);
+	--c-line-strong: rgba(251, 67, 101, 0.46);
+
+	--c-primary: #fb4365;
+	--c-primary-soft: rgba(251, 67, 101, 0.14);
+	--c-accent: #fb923c;
+	--c-secondary: #f472b6;
+
+	--c-ok: #fbbf24;
+	--c-warn: #fb923c;
+	--c-danger: #ff2d55;
+	--c-info: #fda4af;
+
+	--c-text: #ffd9e0;
+	--c-muted: #c2788c;
+	--c-faint: #8a4256;
+
+	--glow: 251, 67, 101;
+	--rain: rgba(251, 67, 101, 0.85);
+	--rain-head: #ffd7de;
+}
+
+/* ============================================================
+   BASE
+   ============================================================ */
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+html,
+body {
+	margin: 0;
+	height: 100%;
+	background: var(--c-void);
+	color: var(--c-text);
+	font-family: var(--font-ui);
+	-webkit-font-smoothing: antialiased;
+	text-rendering: optimizeLegibility;
+	overscroll-behavior: none;
+}
+
+/* `html` padding is deliberately left alone: when this page runs inside a
+   host that pads :root with the phone's safe-area insets, that padding
+   must survive. Fixed chrome adds the insets itself (see .statusbar). */
+body {
+	padding: 0;
+	overflow-x: hidden;
+}
+
+/* Reusable inset tokens so fixed chrome doesn't hard-code env() calls. */
+:root {
+	--safe-t: env(safe-area-inset-top, 0px);
+	--safe-b: env(safe-area-inset-bottom, 0px);
+	--safe-l: env(safe-area-inset-left, 0px);
+	--safe-r: env(safe-area-inset-right, 0px);
+	--bar-h: 56px;
+	color-scheme: dark;
+}
+
+::selection {
+	background: rgba(var(--glow), 0.3);
+	color: #fff;
+}
+
+/* Scrollbars */
+* {
+	scrollbar-width: thin;
+	scrollbar-color: rgba(var(--glow), 0.35) transparent;
+}
+*::-webkit-scrollbar {
+	width: 8px;
+	height: 8px;
+}
+*::-webkit-scrollbar-track {
+	background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+	background: rgba(var(--glow), 0.28);
+	border-radius: 4px;
+}
+*::-webkit-scrollbar-thumb:hover {
+	background: rgba(var(--glow), 0.5);
+}
+
+button {
+	font-family: inherit;
+	color: inherit;
+	cursor: pointer;
+	border: none;
+	background: none;
+}
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+[tabindex]:focus-visible {
+	outline: 2px solid var(--c-primary);
+	outline-offset: 2px;
+	border-radius: 3px;
+}
+
+input,
+select {
+	font-family: inherit;
+	color: inherit;
+}
+
+/* ============================================================
+   TYPOGRAPHY HELPERS
+   ============================================================ */
+
+.font-display {
+	font-family: var(--font-display);
+	letter-spacing: 0.06em;
+}
+.font-mono {
+	font-family: var(--font-mono);
+}
+.tracking-cyber {
+	letter-spacing: 0.22em;
+}
+
+.label {
+	font-family: var(--font-mono);
+	font-size: 0.625rem;
+	letter-spacing: 0.2em;
+	text-transform: uppercase;
+	color: var(--c-muted);
+}
+
+/* ============================================================
+   SURFACES
+   ============================================================ */
+
+.panel {
+	position: relative;
+	background:
+		linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0) 55%),
+		var(--c-panel);
+	border: 1px solid var(--c-line);
+	border-radius: 10px;
+	backdrop-filter: blur(14px) saturate(130%);
+	-webkit-backdrop-filter: blur(14px) saturate(130%);
+}
+
+/* Corner brackets — the signature frame of the whole UI */
+.bracketed::before,
+.bracketed::after {
+	content: '';
+	position: absolute;
+	width: 14px;
+	height: 14px;
+	border-color: var(--c-line-strong);
+	border-style: solid;
+	pointer-events: none;
+	transition: border-color 0.3s ease;
+}
+.bracketed::before {
+	top: -1px;
+	left: -1px;
+	border-width: 1px 0 0 1px;
+	border-top-left-radius: 10px;
+}
+.bracketed::after {
+	bottom: -1px;
+	right: -1px;
+	border-width: 0 1px 1px 0;
+	border-bottom-right-radius: 10px;
+}
+.bracketed:hover::before,
+.bracketed:hover::after {
+	border-color: var(--c-primary);
+}
+
+.glow-edge {
+	box-shadow:
+		0 0 0 1px rgba(var(--glow), 0.1),
+		0 0 24px -6px rgba(var(--glow), 0.3),
+		inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+/* Rotating conic border for "live" panels */
+.live-border {
+	position: relative;
+	isolation: isolate;
+}
+.live-border::before {
+	content: '';
+	position: absolute;
+	inset: -1px;
+	border-radius: inherit;
+	padding: 1px;
+	background: conic-gradient(
+		from var(--angle, 0deg),
+		transparent 0%,
+		rgba(var(--glow), 0.75) 12%,
+		transparent 28%,
+		transparent 100%
+	);
+	-webkit-mask:
+		linear-gradient(#000 0 0) content-box,
+		linear-gradient(#000 0 0);
+	-webkit-mask-composite: xor;
+	mask-composite: exclude;
+	animation: spin-border 4.5s linear infinite;
+	z-index: -1;
+	pointer-events: none;
+}
+@property --angle {
+	syntax: '<angle>';
+	initial-value: 0deg;
+	inherits: false;
+}
+@keyframes spin-border {
+	to {
+		--angle: 360deg;
+	}
+}
+
+/* ============================================================
+   BUTTONS & PILLS
+
+   NOTE: these are deliberately NOT in @layer components. Doing so puts
+   them below Tailwind's preflight, which resets `border` and button
+   backgrounds, and the buttons lose their frame entirely. Being
+   unlayered and declared after the utilities means a bare `hidden`
+   utility can't override `.btn`'s display — so anywhere a button or
+   pill needs to be hidden responsively, wrap it in a plain element and
+   hide that instead.
+   ============================================================ */
+
+.btn {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	padding: 0.68rem 1.15rem;
+	font-family: var(--font-mono);
+	font-size: 0.7rem;
+	font-weight: 500;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	color: var(--c-text);
+	background: linear-gradient(180deg, rgba(var(--glow), 0.14), rgba(var(--glow), 0.05));
+	border: 1px solid rgba(var(--glow), 0.32);
+	border-radius: 6px;
+	overflow: hidden;
+	transition:
+		transform 0.18s cubic-bezier(0.22, 1, 0.36, 1),
+		box-shadow 0.25s ease,
+		border-color 0.25s ease,
+		background 0.25s ease;
+	touch-action: manipulation;
+	-webkit-tap-highlight-color: transparent;
+}
+.btn::after {
+	/* sheen sweep on hover */
+	content: '';
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(110deg, transparent 20%, rgba(255, 255, 255, 0.18) 50%, transparent 80%);
+	transform: translateX(-120%);
+	transition: transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+	pointer-events: none;
+}
+.btn:hover {
+	border-color: var(--c-primary);
+	background: linear-gradient(180deg, rgba(var(--glow), 0.26), rgba(var(--glow), 0.1));
+	box-shadow:
+		0 0 22px -4px rgba(var(--glow), 0.55),
+		inset 0 0 18px -8px rgba(var(--glow), 0.6);
+	transform: translateY(-1px);
+}
+.btn:hover::after {
+	transform: translateX(120%);
+}
+.btn:active {
+	transform: translateY(1px) scale(0.985);
+}
+.btn:disabled {
+	opacity: 0.38;
+	cursor: not-allowed;
+	transform: none;
+	box-shadow: none;
+}
+.btn:disabled:hover::after {
+	transform: translateX(-120%);
+}
+
+.btn-primary {
+	color: #02131a;
+	background: linear-gradient(180deg, var(--c-primary), rgba(var(--glow), 0.72));
+	border-color: var(--c-primary);
+	font-weight: 700;
+	box-shadow: 0 0 26px -6px rgba(var(--glow), 0.8);
+}
+.btn-primary:hover {
+	background: linear-gradient(180deg, var(--c-primary), rgba(var(--glow), 0.85));
+	box-shadow: 0 0 34px -4px rgba(var(--glow), 0.95);
+}
+
+.btn-ghost {
+	background: transparent;
+	border-color: var(--c-line);
+	color: var(--c-muted);
+}
+.btn-ghost:hover {
+	color: var(--c-text);
+	background: rgba(var(--glow), 0.08);
+}
+
+.btn-sm {
+	padding: 0.42rem 0.75rem;
+	font-size: 0.6rem;
+	letter-spacing: 0.12em;
+}
+
+/* Ripple element injected on click */
+.ripple {
+	position: absolute;
+	border-radius: 50%;
+	transform: scale(0);
+	background: rgba(255, 255, 255, 0.4);
+	animation: ripple-out 0.6s ease-out forwards;
+	pointer-events: none;
+}
+@keyframes ripple-out {
+	to {
+		transform: scale(2.6);
+		opacity: 0;
+	}
+}
+
+/* ---------- STATUS PILLS & INDICATORS ---------- */
+
+.pill {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	padding: 0.2rem 0.55rem;
+	font-family: var(--font-mono);
+	font-size: 0.58rem;
+	letter-spacing: 0.16em;
+	text-transform: uppercase;
+	border: 1px solid var(--c-line);
+	border-radius: 999px;
+	color: var(--c-muted);
+	white-space: nowrap;
+}
+
+.dot {
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: currentColor;
+	flex: none;
+}
+.dot-pulse {
+	animation: dot-pulse 1.8s ease-in-out infinite;
+	box-shadow: 0 0 8px currentColor;
+}
+@keyframes dot-pulse {
+	0%,
+	100% {
+		opacity: 1;
+		transform: scale(1);
+	}
+	50% {
+		opacity: 0.35;
+		transform: scale(0.78);
+	}
+}
+
+.sim-badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	padding: 0.22rem 0.6rem;
+	font-family: var(--font-mono);
+	font-size: 0.56rem;
+	font-weight: 500;
+	letter-spacing: 0.17em;
+	color: var(--c-warn);
+	background: rgba(251, 191, 36, 0.09);
+	border: 1px solid rgba(251, 191, 36, 0.4);
+	border-radius: 4px;
+	white-space: nowrap;
+}
+
+/* ============================================================
+   ATMOSPHERE OVERLAYS
+   ============================================================ */
+
+.scanlines {
+	position: fixed;
+	inset: 0;
+	pointer-events: none;
+	z-index: 90;
+	background: repeating-linear-gradient(
+		to bottom,
+		rgba(0, 0, 0, 0) 0px,
+		rgba(0, 0, 0, 0) 2px,
+		rgba(0, 0, 0, 0.17) 3px,
+		rgba(0, 0, 0, 0.17) 4px
+	);
+	mix-blend-mode: multiply;
+	opacity: 0.55;
+}
+
+.vignette {
+	position: fixed;
+	inset: 0;
+	pointer-events: none;
+	z-index: 89;
+	background: radial-gradient(
+		ellipse 115% 85% at calc(var(--mx) * 100%) calc(var(--my) * 100%),
+		rgba(var(--glow), 0.07) 0%,
+		rgba(0, 0, 0, 0) 42%,
+		rgba(0, 0, 0, 0.55) 100%
+	);
+	transition: background 0.5s ease-out;
+}
+
+/* Slow drifting sweep that keeps the screen feeling alive */
+.sweep {
+	position: fixed;
+	inset: 0;
+	pointer-events: none;
+	z-index: 88;
+	background: linear-gradient(
+		180deg,
+		transparent 0%,
+		rgba(var(--glow), 0.045) 48%,
+		rgba(var(--glow), 0.08) 50%,
+		rgba(var(--glow), 0.045) 52%,
+		transparent 100%
+	);
+	animation: sweep-down 7s linear infinite;
+}
+@keyframes sweep-down {
+	0% {
+		transform: translateY(-100%);
+	}
+	100% {
+		transform: translateY(100%);
+	}
+}
+
+/* ============================================================
+   TEXT EFFECTS
+   ============================================================ */
+
+.text-glow {
+	text-shadow: 0 0 14px rgba(var(--glow), 0.6);
+}
+
+.glitch {
+	position: relative;
+	display: inline-block;
+}
+.glitch::before,
+.glitch::after {
+	content: attr(data-text);
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+}
+.glitch::before {
+	color: var(--c-danger);
+	animation: glitch-a 2.6s steps(2, end) infinite;
+	clip-path: inset(0 0 62% 0);
+}
+.glitch::after {
+	color: var(--c-info);
+	animation: glitch-b 3.1s steps(2, end) infinite;
+	clip-path: inset(58% 0 0 0);
+}
+@keyframes glitch-a {
+	0%,
+	92%,
+	100% {
+		transform: translate(0);
+		opacity: 0;
+	}
+	93% {
+		transform: translate(-2px, -1px);
+		opacity: 0.85;
+	}
+	96% {
+		transform: translate(2px, 1px);
+		opacity: 0.7;
+	}
+}
+@keyframes glitch-b {
+	0%,
+	90%,
+	100% {
+		transform: translate(0);
+		opacity: 0;
+	}
+	91% {
+		transform: translate(2px, 1px);
+		opacity: 0.8;
+	}
+	95% {
+		transform: translate(-3px, -1px);
+		opacity: 0.6;
+	}
+}
+
+/* Full-screen glitch wipe used between views */
+.glitch-wipe {
+	position: fixed;
+	inset: 0;
+	z-index: 120;
+	pointer-events: none;
+	background: rgba(var(--glow), 0.1);
+	animation: glitch-wipe 0.44s steps(5, end) forwards;
+}
+@keyframes glitch-wipe {
+	0% {
+		opacity: 1;
+		clip-path: inset(0 0 100% 0);
+	}
+	25% {
+		clip-path: inset(0 0 42% 0);
+		transform: translateX(-6px);
+	}
+	50% {
+		clip-path: inset(38% 0 24% 0);
+		transform: translateX(7px);
+	}
+	75% {
+		clip-path: inset(70% 0 0 0);
+		transform: translateX(-4px);
+	}
+	100% {
+		opacity: 0;
+		clip-path: inset(100% 0 0 0);
+		transform: translateX(0);
+	}
+}
+
+.cursor-blink::after {
+	content: '▌';
+	margin-left: 1px;
+	animation: blink 1.05s steps(1, end) infinite;
+	color: var(--c-primary);
+}
+@keyframes blink {
+	0%,
+	49% {
+		opacity: 1;
+	}
+	50%,
+	100% {
+		opacity: 0;
+	}
+}
+
+/* ============================================================
+   3D TILT CARDS
+   ============================================================ */
+
+.tilt {
+	transform-style: preserve-3d;
+	transform: perspective(900px) rotateX(var(--ry, 0deg)) rotateY(var(--rx, 0deg))
+		translateZ(0);
+	transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+	will-change: transform;
+}
+.tilt-active {
+	transition: transform 0.08s linear;
+}
+/* Cursor-following highlight on cards */
+.tilt-sheen {
+	position: absolute;
+	inset: 0;
+	border-radius: inherit;
+	pointer-events: none;
+	opacity: 0;
+	transition: opacity 0.35s ease;
+	background: radial-gradient(
+		340px circle at var(--px, 50%) var(--py, 50%),
+		rgba(var(--glow), 0.17),
+		transparent 62%
+	);
+}
+.tilt:hover .tilt-sheen {
+	opacity: 1;
+}
+
+/* ============================================================
+   ENTRANCE ANIMATIONS
+   ============================================================ */
+
+@keyframes rise-in {
+	from {
+		opacity: 0;
+		transform: translateY(14px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+.rise-in {
+	animation: rise-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes bar-grow {
+	from {
+		transform: scaleY(0);
+	}
+	to {
+		transform: scaleY(1);
+	}
+}
+
+.shimmer {
+	background: linear-gradient(
+		100deg,
+		transparent 25%,
+		rgba(var(--glow), 0.35) 50%,
+		transparent 75%
+	);
+	background-size: 220% 100%;
+	animation: shimmer 2s linear infinite;
+}
+@keyframes shimmer {
+	to {
+		background-position: -220% 0;
+	}
+}
+
+/* ============================================================
+   TERMINAL
+   ============================================================ */
+
+.terminal-surface {
+	background:
+		radial-gradient(ellipse 80% 60% at 50% 0%, rgba(var(--glow), 0.07), transparent 70%),
+		linear-gradient(180deg, #03060d 0%, #01030a 100%);
+}
+:root[data-theme='green'] .terminal-surface {
+	background:
+		radial-gradient(ellipse 80% 60% at 50% 0%, rgba(var(--glow), 0.07), transparent 70%),
+		linear-gradient(180deg, #020804 0%, #000402 100%);
+}
+:root[data-theme='red'] .terminal-surface {
+	background:
+		radial-gradient(ellipse 80% 60% at 50% 0%, rgba(var(--glow), 0.07), transparent 70%),
+		linear-gradient(180deg, #0a0205 0%, #050102 100%);
+}
+
+.term-line {
+	display: flex;
+	gap: 0.6rem;
+	padding: 0.5px 0;
+	font-family: var(--font-mono);
+	font-size: 0.72rem;
+	line-height: 1.45;
+	white-space: pre-wrap;
+	word-break: break-word;
+	animation: term-in 0.16s ease-out;
+}
+@keyframes term-in {
+	from {
+		opacity: 0;
+		transform: translateX(-5px);
+	}
+	to {
+		opacity: 1;
+		transform: translateX(0);
+	}
+}
+.term-line.hl {
+	background: rgba(var(--glow), 0.09);
+	box-shadow: inset 2px 0 0 var(--c-primary);
+}
+
+.lv-sys {
+	color: var(--c-primary);
+}
+.lv-ok {
+	color: var(--c-ok);
+}
+.lv-warn {
+	color: var(--c-warn);
+}
+.lv-err {
+	color: var(--c-danger);
+}
+.lv-info {
+	color: var(--c-info);
+}
+.lv-dim {
+	color: var(--c-faint);
+}
+.lv-raw {
+	color: #93a9c4;
+}
+:root[data-theme='green'] .lv-raw {
+	color: #7fae91;
+}
+:root[data-theme='red'] .lv-raw {
+	color: #c08b99;
+}
+
+/* Terminal CRT flicker */
+@keyframes flicker {
+	0%,
+	100% {
+		opacity: 1;
+	}
+	92% {
+		opacity: 1;
+	}
+	93% {
+		opacity: 0.82;
+	}
+	94% {
+		opacity: 1;
+	}
+	96% {
+		opacity: 0.9;
+	}
+	97% {
+		opacity: 1;
+	}
+}
+.flicker {
+	animation: flicker 6s linear infinite;
+}
+
+/* ============================================================
+   PROGRESS
+   ============================================================ */
+
+.progress-track {
+	position: relative;
+	height: 6px;
+	border-radius: 999px;
+	background: rgba(var(--glow), 0.1);
+	overflow: hidden;
+	border: 1px solid rgba(var(--glow), 0.16);
+}
+.progress-fill {
+	position: absolute;
+	inset: 0 auto 0 0;
+	border-radius: 999px;
+	background: linear-gradient(90deg, rgba(var(--glow), 0.55), var(--c-primary));
+	box-shadow: 0 0 16px rgba(var(--glow), 0.85);
+	transition: width 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.progress-fill::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(
+		90deg,
+		transparent,
+		rgba(255, 255, 255, 0.55),
+		transparent
+	);
+	animation: shimmer-bar 1.3s linear infinite;
+}
+/* Static data readouts (meters, category bars) shouldn't shimmer — the
+   sweep is a signal that something is actively progressing. */
+.progress-fill.static::after {
+	display: none;
+}
+@keyframes shimmer-bar {
+	from {
+		transform: translateX(-100%);
+	}
+	to {
+		transform: translateX(100%);
+	}
+}
+
+/* ============================================================
+   FORMS
+   ============================================================ */
+
+.field {
+	width: 100%;
+	padding: 0.7rem 0.85rem;
+	font-family: var(--font-mono);
+	font-size: 0.82rem;
+	letter-spacing: 0.04em;
+	color: var(--c-text);
+	background: rgba(0, 0, 0, 0.35);
+	border: 1px solid var(--c-line);
+	border-radius: 6px;
+	transition:
+		border-color 0.2s ease,
+		box-shadow 0.2s ease,
+		background 0.2s ease;
+}
+.field::placeholder {
+	color: var(--c-faint);
+}
+.field:focus {
+	outline: none;
+	border-color: var(--c-primary);
+	background: rgba(0, 0, 0, 0.5);
+	box-shadow: 0 0 0 3px rgba(var(--glow), 0.12);
+}
+select.field {
+	appearance: none;
+	background-image: linear-gradient(45deg, transparent 50%, var(--c-muted) 50%),
+		linear-gradient(135deg, var(--c-muted) 50%, transparent 50%);
+	background-position:
+		calc(100% - 17px) calc(50% + 1px),
+		calc(100% - 12px) calc(50% + 1px);
+	background-size:
+		5px 5px,
+		5px 5px;
+	background-repeat: no-repeat;
+	padding-right: 2rem;
+}
+select.field option {
+	background: var(--c-panel-solid);
+	color: var(--c-text);
+}
+
+/* ============================================================
+   UTILITIES
+   ============================================================ */
+
+.hide-scroll {
+	scrollbar-width: none;
+}
+.hide-scroll::-webkit-scrollbar {
+	display: none;
+}
+
+.hex-float {
+	position: absolute;
+	font-family: var(--font-mono);
+	font-size: 0.58rem;
+	color: rgba(var(--glow), 0.26);
+	pointer-events: none;
+	user-select: none;
+	animation: hex-drift linear infinite;
+}
+@keyframes hex-drift {
+	from {
+		transform: translateY(14vh);
+		opacity: 0;
+	}
+	12% {
+		opacity: 1;
+	}
+	88% {
+		opacity: 1;
+	}
+	to {
+		transform: translateY(-14vh);
+		opacity: 0;
+	}
+}
+
+/* ============================================================
+   REDUCED MOTION
+   Kills ambient/decorative motion but keeps state changes
+   legible — the simulation still advances and completes.
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.08s !important;
+	}
+	.sweep,
+	.hex-float,
+	.shimmer,
+	.live-border::before,
+	.progress-fill::after {
+		display: none !important;
+	}
+	.scanlines {
+		opacity: 0.25;
+	}
+	.tilt {
+		transform: none !important;
+	}
+}
